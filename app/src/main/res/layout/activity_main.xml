@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	tools:context=".ui.MainActivity">
+
+	<RelativeLayout
+		android:id="@+id/main_title"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:background="#0abbb2">
+
+		<TextView
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignParentBottom="true"
+			android:layout_marginBottom="15dp"
+			android:layout_marginLeft="10dp"
+			android:text="聊天室"
+			android:textColor="#ffffff"
+			android:textSize="20sp"/>
+
+		<TextView
+			android:id="@+id/main_exit"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignParentBottom="true"
+			android:layout_alignParentRight="true"
+			android:layout_marginBottom="15dp"
+			android:layout_marginRight="10dp"
+			android:text="退出"
+			android:textColor="#ffffff"
+			android:textSize="16sp"/>
+	</RelativeLayout>
+
+	<android.support.v7.widget.RecyclerView
+		android:id="@+id/main_list"
+		android:layout_width="match_parent"
+		android:layout_height="0dp"
+		app:layout_constraintBottom_toTopOf="@+id/main_tooly"
+		app:layout_constraintTop_toBottomOf="@+id/main_title"/>
+
+	<LinearLayout
+		android:id="@+id/main_tooly2"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_marginBottom="5dp"
+		app:layout_constraintBottom_toTopOf="@+id/main_tooly"
+		app:layout_constraintRight_toRightOf="parent">
+
+		<Button
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginLeft="10dp"
+			android:layout_weight="1"
+			android:background="@drawable/login_enter"
+			android:textColor="#ffffff"
+			android:visibility="invisible"/>
+
+		<Button
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginLeft="10dp"
+			android:layout_weight="1"
+			android:background="@drawable/login_enter"
+			android:textColor="#ffffff"
+			android:visibility="invisible"/>
+
+		<Button
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginLeft="10dp"
+			android:layout_weight="1"
+			android:background="@drawable/login_enter"
+			android:textColor="#ffffff"
+			android:visibility="invisible"/>
+
+		<Button
+			android:id="@+id/main_tool_audio_mix"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginLeft="10dp"
+			android:layout_marginRight="10dp"
+			android:layout_weight="1"
+			android:background="@drawable/login_enter"
+			android:text="伴奏"
+			android:textColor="#ffffff"/>
+	</LinearLayout>
+
+	<LinearLayout
+		android:id="@+id/main_tooly"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_marginBottom="10dp"
+		app:layout_constraintBottom_toBottomOf="parent">
+
+		<Button
+			android:id="@+id/main_tool_speak"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginLeft="10dp"
+			android:layout_weight="1"
+			android:background="@drawable/login_enter"
+			android:text="上麦"
+			android:textColor="#ffffff"/>
+
+		<Button
+			android:id="@+id/main_tool_audio"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginLeft="10dp"
+			android:layout_weight="1"
+			android:background="@drawable/login_enter"
+			android:text="外放"
+			android:textColor="#ffffff"/>
+
+		<Button
+			android:id="@+id/main_tool_mute_local"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginLeft="10dp"
+			android:layout_weight="1"
+			android:background="@drawable/login_enter"
+			android:text="静音自己"
+			android:textColor="#ffffff"/>
+
+		<Button
+			android:id="@+id/main_tool_mute_other"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginLeft="10dp"
+			android:layout_marginRight="10dp"
+			android:layout_weight="1"
+			android:background="@drawable/login_enter"
+			android:text="静音别人"
+			android:textColor="#ffffff"/>
+	</LinearLayout>
+</android.support.constraint.ConstraintLayout>
