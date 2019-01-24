@@ -7,7 +7,6 @@ import android.content.IntentFilter;
 import android.content.res.AssetManager;
 import android.content.res.TypedArray;
 import android.os.Bundle;
-import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
@@ -167,6 +166,11 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                     EnterUserInfo userInfo = new EnterUserInfo(LocalConfig.mUid);
                     adjustUser(false, userInfo);
                     mMainToolSpeak.setText("上麦");
+                    if (mIsPlayAudioMix) {
+                        mTTTEngine.stopAudioMixing();
+                        mMainToolAudioMix.setText("伴奏");
+                        mIsPlayAudioMix = !mIsPlayAudioMix;
+                    }
                 } else {
                     mTTTEngine.setClientRole(Constants.CLIENT_ROLE_BROADCASTER, "");
                     LocalConfig.mRole = Constants.CLIENT_ROLE_BROADCASTER;
@@ -185,47 +189,53 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                 }
                 break;
             case R.id.main_tool_mute_local:
-                // 本地静音
-                mIsLocalMute = !mIsLocalMute;
-                mTTTEngine.muteLocalAudioStream(mIsLocalMute);
-                for (int i = 0; i < mDatas.size(); i++) {
-                    EnterUserInfo enterUserInfo = mDatas.get(i);
-                    if (LocalConfig.mUid == enterUserInfo.uid) {
-                        enterUserInfo.audioMute = mIsLocalMute;
-                        mMyAdapter.notifyDataSetChanged();
-                        break;
+                if (LocalConfig.mRole == Constants.CLIENT_ROLE_BROADCASTER) {
+                    // 本地静音
+                    mIsLocalMute = !mIsLocalMute;
+                    mTTTEngine.muteLocalAudioStream(mIsLocalMute);
+                    for (int i = 0; i < mDatas.size(); i++) {
+                        EnterUserInfo enterUserInfo = mDatas.get(i);
+                        if (LocalConfig.mUid == enterUserInfo.uid) {
+                            enterUserInfo.audioMute = mIsLocalMute;
+                            mMyAdapter.notifyDataSetChanged();
+                            break;
+                        }
                     }
                 }
                 break;
             case R.id.main_tool_mute_other:
-                // 静音所有远端用户
-                mIsRemoteMute = !mIsRemoteMute;
-                for (EnterUserInfo mData : mDatas) {
-                    if (mData.uid != LocalConfig.mUid) {
-                        mData.audioMute = mIsRemoteMute;
-                        mTTTEngine.muteRemoteAudioStream(mData.uid, mIsRemoteMute);
+                if (LocalConfig.mRole == Constants.CLIENT_ROLE_BROADCASTER) {
+                    // 静音所有远端用户
+                    mIsRemoteMute = !mIsRemoteMute;
+                    for (EnterUserInfo mData : mDatas) {
+                        if (mData.uid != LocalConfig.mUid) {
+                            mData.audioMute = mIsRemoteMute;
+                            mTTTEngine.muteRemoteAudioStream(mData.uid, mIsRemoteMute);
+                        }
                     }
+                    mMyAdapter.notifyDataSetChanged();
                 }
-                mMyAdapter.notifyDataSetChanged();
                 break;
             case R.id.main_tool_audio_mix:
-                // 播放或停止伴奏
-                if (TextUtils.isEmpty(mAuidoMixFilePath)) {
-                    return;
-                }
+                if (LocalConfig.mRole == Constants.CLIENT_ROLE_BROADCASTER) {
+                    // 播放或停止伴奏
+                    if (TextUtils.isEmpty(mAuidoMixFilePath)) {
+                        return;
+                    }
 
-                File temp = new File(mAuidoMixFilePath);
-                if (!temp.exists()) {
-                    return;
-                }
+                    File temp = new File(mAuidoMixFilePath);
+                    if (!temp.exists()) {
+                        return;
+                    }
 
-                mIsPlayAudioMix = !mIsPlayAudioMix;
-                if (mIsPlayAudioMix) {
-                    mTTTEngine.startAudioMixing(mAuidoMixFilePath, false, false, 1);
-                    mMainToolAudioMix.setText("停止伴奏");
-                } else {
-                    mTTTEngine.stopAudioMixing();
-                    mMainToolAudioMix.setText("伴奏");
+                    mIsPlayAudioMix = !mIsPlayAudioMix;
+                    if (mIsPlayAudioMix) {
+                        mTTTEngine.startAudioMixing(mAuidoMixFilePath, false, false, 1);
+                        mMainToolAudioMix.setText("停止伴奏");
+                    } else {
+                        mTTTEngine.stopAudioMixing();
+                        mMainToolAudioMix.setText("伴奏");
+                    }
                 }
                 break;
         }
@@ -274,7 +284,12 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     }
 
     private void copyFileFromAsset() {
-        mAuidoMixFilePath = Environment.getExternalStorageDirectory() + "/3T_MixFile.mp3";
+        File externalFilesDir = getFilesDir();
+        if (externalFilesDir == null) {
+            return;
+        }
+
+        mAuidoMixFilePath = externalFilesDir.getAbsolutePath() + "/3T_MixFile.mp3";
         File temp = new File(mAuidoMixFilePath);
         if (temp.exists()) {
             return;

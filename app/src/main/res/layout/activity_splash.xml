@@ -120,7 +120,7 @@
 		android:onClick="onTestButtonClick"
 		android:text="@string/ttt_test"
 		android:textColor="#FFFFFF"
-		android:visibility="visible"
+		android:visibility="invisible"
 		app:layout_constraintEnd_toEndOf="parent"
 		app:layout_constraintTop_toTopOf="parent"/>
 

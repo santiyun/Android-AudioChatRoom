@@ -1,0 +1,4 @@
+/.gradle/
+/.idea/
+/Android-AudioChatRoom.iml
+/app/libs/*.aar
