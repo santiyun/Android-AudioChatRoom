@@ -20,7 +20,6 @@ import com.ttt.chatroom.LocalConstans;
 import com.ttt.chatroom.R;
 import com.ttt.chatroom.bean.JniObjs;
 import com.ttt.chatroom.callback.MyTTTRtcEngineEventHandler;
-import com.ttt.chatroom.dialog.TestDialog;
 import com.ttt.chatroom.utils.MySpUtils;
 import com.wushuangtech.library.Constants;
 import com.wushuangtech.wstechapi.TTTRtcEngine;
@@ -57,7 +56,6 @@ public class SplashActivity extends BaseActivity {
             System.exit(0);
         }
         init();
-        initTestCode();
     }
 
     @Override
@@ -124,14 +122,10 @@ public class SplashActivity extends BaseActivity {
         mTTTEngine.setClientRole(LocalConfig.mRole);
         //6.设置本地视频预览分辨率为360P，此步骤为可选操作，默认就是360P。
         mTTTEngine.setVideoProfile(Constants.TTTRTC_VIDEOPROFILE_360P, false);
+        //7.设置音频推流地址。
         PublisherConfiguration mPublisherConfiguration = new PublisherConfiguration();
-        if (mTestDialog.mTestConfig.mIsTestMode) {
-            mPublisherConfiguration.setPushUrl(mTestDialog.mTestConfig.mPushUrl);
-        } else {
-            mPublisherConfiguration.setPushUrl("rtmp://127.0.0.1/live/" + mRoomName);
-        }
+        mPublisherConfiguration.setPushUrl("rtmp://127.0.0.1/live/" + mRoomName);
         mTTTEngine.configPublisher(mPublisherConfiguration);
-        mTTTEngine.setServerIp(mTestDialog.mTestConfig.mIP, mTestDialog.mTestConfig.mPort);
     }
 
     public void onClickEnterButton(View v) {
@@ -205,28 +199,4 @@ public class SplashActivity extends BaseActivity {
             }
         }
     }
-
-    TestDialog mTestDialog;
-
-    // -----test code , ignore-----
-    public void initTestCode() {
-        mTestDialog = new TestDialog(mContext);
-        mTestDialog.setCanceledOnTouchOutside(false);
-
-        Object spObj = MySpUtils.getParam(this, "PushUrl", "");
-        if (spObj != null) {
-            mTestDialog.mTestConfig.mPushUrl = (String) spObj;
-        }
-
-        Object spObj2 = MySpUtils.getParam(this, "PullUrl", "");
-        if (spObj2 != null) {
-            mTestDialog.mTestConfig.mPullUrl = (String) spObj;
-        }
-    }
-
-    public void onTestButtonClick(View v) {
-        mTestDialog.setServerParams();
-        mTestDialog.show();
-    }
-    // -----test code , ignore-----
 }

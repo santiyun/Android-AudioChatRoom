@@ -54,7 +54,6 @@
 
 	Android权限要求:
 	
-     * **android.permission.CAMERA** ---> SDK视频模块需要使用此权限用来打开关闭和摄像头，用于获取本地视频预览数据。
      * **android.permission.RECORD_AUDIO** ---> SDK音频模块需要使用此权限用来访问麦克风，用于获取本地音频数据。
      * **android.permission.INTERNET** ---> SDK的直播和通讯功能，均需要使用网络进行上传。
      * **android.permission.BLUETOOTH** ---> SDK的直播和通讯功能，均需要访问蓝牙权限，保证用户能正常使用蓝牙耳机。
