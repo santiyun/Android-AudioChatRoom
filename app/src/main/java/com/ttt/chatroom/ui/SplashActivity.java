@@ -79,6 +79,7 @@ public class SplashActivity extends BaseActivity {
         mAuthorBT = findViewById(R.id.vice);
         mBroadcastBT = findViewById(R.id.broadcast);
         mRoomIDET = findViewById(R.id.room_id);
+        // 获取 SDK 的版本信息并显示
         TextView mVersion = findViewById(R.id.version);
         String string = getResources().getString(R.string.version_info);
         String result = String.format(string, TTTRtcEngine.getInstance().getSdkVersion());
@@ -120,9 +121,7 @@ public class SplashActivity extends BaseActivity {
             LocalConfig.mRole = Constants.CLIENT_ROLE_AUDIENCE;
         }
         mTTTEngine.setClientRole(LocalConfig.mRole);
-        //6.设置本地视频预览分辨率为360P，此步骤为可选操作，默认就是360P。
-        mTTTEngine.setVideoProfile(Constants.TTTRTC_VIDEOPROFILE_360P, false);
-        //7.设置音频推流地址。
+        //6.设置音频推流地址。
         PublisherConfiguration mPublisherConfiguration = new PublisherConfiguration();
         mPublisherConfiguration.setPushUrl("rtmp://127.0.0.1/live/" + mRoomName);
         mTTTEngine.configPublisher(mPublisherConfiguration);
@@ -145,14 +144,19 @@ public class SplashActivity extends BaseActivity {
         mIsLoging = true;
         //随机生成用户ID
         Random mRandom = new Random();
-        long mUserId = mRandom.nextInt(999999);
+        final long mUserId = mRandom.nextInt(999999);
         LocalConfig.mUid = mUserId;
         //保存配置
         MySpUtils.setParam(this, "RoomID", mRoomName);
         //配置 SDK
         initSDK();
         // 开始加入频道
-        mTTTEngine.joinChannel("", mRoomName, mUserId);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                mTTTEngine.joinChannel("", mRoomName, mUserId);
+            }
+        }).start();
         mDialog.setMessage(getString(R.string.ttt_loading_channel));
         mDialog.show();
     }
