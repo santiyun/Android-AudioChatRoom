@@ -12,7 +12,6 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.EditText;
 
-import com.ttt.chatroom.LocalConfig;
 import com.ttt.chatroom.R;
 import com.ttt.chatroom.utils.MySpUtils;
 
@@ -24,17 +23,19 @@ public class TestDialog extends Dialog implements View.OnClickListener {
 
     private Context mContext;
     private EditText mPort, mIP, mPushUrl, mPullUrl;
+    public TestConfig mTestConfig;
 
     public TestDialog(@NonNull Context context) {
         super(context, R.style.NoBackGroundDialog);
         mContext = context;
+        mTestConfig = new TestConfig();
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.test_dialog_layout);
-
+        
         DisplayMetrics dm = mContext.getResources().getDisplayMetrics();
         Window window = getWindow();
         if (window != null) {
@@ -47,7 +48,7 @@ public class TestDialog extends Dialog implements View.OnClickListener {
         mPort = findViewById(R.id.port);
         mPushUrl = findViewById(R.id.text_pushurl);
         mPullUrl = findViewById(R.id.text_pullurl);
-        if (LocalConfig.mIsTestMode) {
+        if (mTestConfig.mIsTestMode) {
             mPushUrl.setVisibility(View.VISIBLE);
             mPullUrl.setVisibility(View.VISIBLE);
             findViewById(R.id.text_pushurl_tv).setVisibility(View.VISIBLE);
@@ -64,16 +65,16 @@ public class TestDialog extends Dialog implements View.OnClickListener {
 
     public void setServerParams() {
         if (mIP != null) {
-            if (!TextUtils.isEmpty(LocalConfig.mIP)) {
-                mIP.setText(LocalConfig.mIP);
+            if (!TextUtils.isEmpty(mTestConfig.mIP)) {
+                mIP.setText(mTestConfig.mIP);
             } else {
                 mIP.setText("");
             }
         }
 
         if (mPort != null) {
-            if (LocalConfig.mPort != 0) {
-                mPort.setText(String.valueOf(LocalConfig.mPort));
+            if (mTestConfig.mPort != 0) {
+                mPort.setText(String.valueOf(mTestConfig.mPort));
             } else {
                 mPort.setText("");
             }
@@ -82,65 +83,78 @@ public class TestDialog extends Dialog implements View.OnClickListener {
         if (mPushUrl != null) {
             Object spObj = MySpUtils.getParam(getContext(), "PushUrl", "");
             if (spObj != null) {
-                LocalConfig.mPushUrl = (String) spObj;
+                mTestConfig.mPushUrl = (String) spObj;
             }
-            mPushUrl.setText(LocalConfig.mPushUrl);
+            mPushUrl.setText(mTestConfig.mPushUrl);
         }
 
         if (mPullUrl != null) {
             Object spObj = MySpUtils.getParam(getContext(), "PullUrl", "");
             if (spObj != null) {
-                LocalConfig.mPullUrl = (String) spObj;
+                mTestConfig.mPullUrl = (String) spObj;
             }
-            mPullUrl.setText(LocalConfig.mPullUrl);
+            mPullUrl.setText(mTestConfig.mPullUrl);
         }
     }
 
     private void onOKButtonClick() {
         Editable mIPText = mIP.getText();
         if (!TextUtils.isEmpty(mIPText)) {
-            LocalConfig.mIP = mIPText.toString();
+            mTestConfig.mIP = mIPText.toString();
         } else {
-            LocalConfig.mIP = "";
+            mTestConfig.mIP = "";
         }
 
         Editable mPortText = mPort.getText();
         if (!TextUtils.isEmpty(mPortText)) {
-            LocalConfig.mPort = Integer.valueOf(mPortText.toString());
+            mTestConfig.mPort = Integer.valueOf(mPortText.toString());
         } else {
-            LocalConfig.mPort = 0;
+            mTestConfig.mPort = 0;
         }
 
         Editable mPushUrlEdit = mPushUrl.getText();
         if (mPushUrlEdit != null) {
             String pushUrl = mPushUrlEdit.toString();
             if (!TextUtils.isEmpty(pushUrl)) {
-                LocalConfig.mPushUrl = pushUrl;
+                mTestConfig.mPushUrl = pushUrl;
             } else {
-                LocalConfig.mPushUrl = "";
+                mTestConfig.mPushUrl = "";
             }
         } else {
-            LocalConfig.mPushUrl = "";
+            mTestConfig.mPushUrl = "";
         }
-        MySpUtils.setParam(getContext(), "PushUrl", LocalConfig.mPushUrl);
+        MySpUtils.setParam(getContext(), "PushUrl", mTestConfig.mPushUrl);
 
         Editable mPullUrlEdit = mPullUrl.getText();
         if (mPullUrlEdit != null) {
             String pullUrl = mPullUrlEdit.toString();
             if (!TextUtils.isEmpty(pullUrl)) {
-                LocalConfig.mPullUrl = pullUrl;
+                mTestConfig.mPullUrl = pullUrl;
             } else {
-                LocalConfig.mPullUrl = "";
+                mTestConfig.mPullUrl = "";
             }
         } else {
-            LocalConfig.mPullUrl = "";
+            mTestConfig.mPullUrl = "";
         }
-        MySpUtils.setParam(getContext(), "PullUrl", LocalConfig.mPullUrl);
+        MySpUtils.setParam(getContext(), "PullUrl", mTestConfig.mPullUrl);
         this.dismiss();
     }
 
     @Override
     public void onClick(View v) {
         onOKButtonClick();
+    }
+
+    public class TestConfig {
+        //114.116.32.193 25000
+        public String mIP = "";
+
+        public int mPort;
+
+        public String mPushUrl;
+
+        public String mPullUrl;
+
+        public boolean mIsTestMode;
     }
 }

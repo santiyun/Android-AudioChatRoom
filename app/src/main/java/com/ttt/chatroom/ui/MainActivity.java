@@ -2,6 +2,7 @@ package com.ttt.chatroom.ui;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.AssetManager;
@@ -20,7 +21,6 @@ import android.widget.TextView;
 
 import com.ttt.chatroom.LocalConfig;
 import com.ttt.chatroom.LocalConstans;
-import com.ttt.chatroom.MainApplication;
 import com.ttt.chatroom.R;
 import com.ttt.chatroom.bean.EnterUserInfo;
 import com.ttt.chatroom.bean.JniObjs;
@@ -36,8 +36,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends BaseActivity implements View.OnClickListener {
-
-    public static final int DISCONNECT = 100;
 
     private MyAdapter mMyAdapter;
     private Button mMainToolSpeak;
@@ -59,41 +57,11 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        initView();
-        // 注册回调函数接收的广播
-        mLocalBroadcast = new MyLocalBroadcastReceiver();
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(MyTTTRtcEngineEventHandler.TAG);
-        registerReceiver(mLocalBroadcast, filter);
-        ((MainApplication) getApplicationContext()).mMyTTTRtcEngineEventHandler.setIsSaveCallBack(false);
-
-        mDatas = new ArrayList<>();
-        EnterUserInfo localUser = new EnterUserInfo(LocalConfig.mUid);
-        if (LocalConfig.mRole == Constants.CLIENT_ROLE_BROADCASTER) {
-            adjustUser(true, localUser);
-        }
-        mMyAdapter.notifyDataSetChanged();
-        if (mErrorExitDialog == null) {
-            //添加确定按钮
-            mErrorExitDialog = new AlertDialog.Builder(mContext)
-                    .setTitle("退出房间提示")//设置对话框标题
-                    .setCancelable(false)
-                    .setPositiveButton("确定", (dialog, which) -> {//确定按钮的响应事件
-                        exitRoom();
-                    });
-        }
-
-        if (LocalConfig.mRole == Constants.CLIENT_ROLE_BROADCASTER) {
-            mMainToolSpeak.setText("下麦");
-            mMainToolMuteLocal.setEnabled(true);
-        } else {
-            mMainToolSpeak.setText("上麦");
-            mMainToolMuteLocal.setEnabled(false);
-        }
-
-        // 启用本地音量上报
+        init();
+        //启用本地音量上报功能，可以查看自己和远端用户的音量波动大小
         mTTTEngine.enableAudioVolumeIndication(300, 3);
         copyFileFromAsset();
+        SplashActivity.mIsLoging = false;
     }
 
     @Override
@@ -111,7 +79,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         }
     }
 
-    private void initView() {
+    private void init() {
         RecyclerView mMainList = findViewById(R.id.main_list);
         LinearLayoutManager manager = new LinearLayoutManager(mContext);
         manager.setOrientation(LinearLayoutManager.VERTICAL);
@@ -128,6 +96,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         mMainToolAudioMix.setOnClickListener(this);
         Button mMainToolMuteOther = findViewById(R.id.main_tool_mute_other);
         mMainToolMuteOther.setOnClickListener(this);
+        //退房间的按钮
         findViewById(R.id.main_exit).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -142,6 +111,41 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         ViewGroup.LayoutParams layoutParams = mTitleViewGroup.getLayoutParams();
         layoutParams.height = (int) (actionbarHeight + getStatusBarHeight(this));
         mTitleViewGroup.setLayoutParams(layoutParams);
+
+        // 注册回调函数，接收 SDK 发的广播
+        mLocalBroadcast = new MyLocalBroadcastReceiver();
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(MyTTTRtcEngineEventHandler.TAG);
+        registerReceiver(mLocalBroadcast, filter);
+        LocalConfig.mMyTTTRtcEngineEventHandler.setIsSaveCallBack(false);
+        //将自己添加到用户列表中
+        mDatas = new ArrayList<>();
+        EnterUserInfo localUser = new EnterUserInfo(LocalConfig.mUid);
+        if (LocalConfig.mRole == Constants.CLIENT_ROLE_BROADCASTER) {
+            adjustUser(true, localUser);
+        }
+        mMyAdapter.notifyDataSetChanged();
+
+        //创建错误提示对话框
+        if (mErrorExitDialog == null) {
+            mErrorExitDialog = new AlertDialog.Builder(mContext)
+                    .setTitle("退出房间提示")
+                    .setCancelable(false)
+                    .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            exitRoom();
+                        }
+                    });
+        }
+
+        if (LocalConfig.mRole == Constants.CLIENT_ROLE_BROADCASTER) {
+            mMainToolSpeak.setText("下麦");
+            mMainToolMuteLocal.setEnabled(true);
+        } else {
+            mMainToolSpeak.setText("上麦");
+            mMainToolMuteLocal.setEnabled(false);
+        }
     }
 
     private int getStatusBarHeight(Context context) {
@@ -159,9 +163,9 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
             default:
                 break;
             case R.id.main_tool_speak:
-                // 上麦和下麦切换
+                // 上麦和下麦切换的操作
                 if (LocalConfig.mRole == Constants.CLIENT_ROLE_BROADCASTER) {
-                    mTTTEngine.setClientRole(Constants.CLIENT_ROLE_AUDIENCE, "");
+                    mTTTEngine.setClientRole(Constants.CLIENT_ROLE_AUDIENCE);
                     LocalConfig.mRole = Constants.CLIENT_ROLE_AUDIENCE;
                     EnterUserInfo userInfo = new EnterUserInfo(LocalConfig.mUid);
                     adjustUser(false, userInfo);
@@ -172,14 +176,14 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                         mIsPlayAudioMix = !mIsPlayAudioMix;
                     }
                 } else {
-                    mTTTEngine.setClientRole(Constants.CLIENT_ROLE_BROADCASTER, "");
+                    mTTTEngine.setClientRole(Constants.CLIENT_ROLE_BROADCASTER);
                     LocalConfig.mRole = Constants.CLIENT_ROLE_BROADCASTER;
                     adjustUser(true, LocalConfig.mUid);
                     mMainToolSpeak.setText("下麦");
                 }
                 break;
             case R.id.main_tool_audio:
-                // 扬声器和听筒、耳机切换
+                // 扬声器和听筒、耳机切换的操作
                 mIsAudioSpeaker = !mIsAudioSpeaker;
                 mTTTEngine.setEnableSpeakerphone(mIsAudioSpeaker);
                 if (mIsAudioSpeaker) {
@@ -189,8 +193,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                 }
                 break;
             case R.id.main_tool_mute_local:
+                // 本地静音的操作，该操作实现不发送自己的音频流。麦下用户默认是静音。
                 if (LocalConfig.mRole == Constants.CLIENT_ROLE_BROADCASTER) {
-                    // 本地静音
                     mIsLocalMute = !mIsLocalMute;
                     mTTTEngine.muteLocalAudioStream(mIsLocalMute);
                     for (int i = 0; i < mDatas.size(); i++) {
@@ -204,8 +208,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                 }
                 break;
             case R.id.main_tool_mute_other:
+                // 静音所有远端用户的声音，该操作实现不接收某个远端用户的音频流
                 if (LocalConfig.mRole == Constants.CLIENT_ROLE_BROADCASTER) {
-                    // 静音所有远端用户
                     mIsRemoteMute = !mIsRemoteMute;
                     for (EnterUserInfo mData : mDatas) {
                         if (mData.uid != LocalConfig.mUid) {
@@ -217,8 +221,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                 }
                 break;
             case R.id.main_tool_audio_mix:
+                // 播放或停止伴奏，Demo 中只有麦上用户可以操作伴奏功能。
                 if (LocalConfig.mRole == Constants.CLIENT_ROLE_BROADCASTER) {
-                    // 播放或停止伴奏
                     if (TextUtils.isEmpty(mAuidoMixFilePath)) {
                         return;
                     }
@@ -241,8 +245,10 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         }
     }
 
+    /**
+     * 执行退房间相关操作
+     */
     public void exitRoom() {
-        MyLog.d("exitRoom was called!... leave room ");
         // 若正在播放伴奏，则停止播放。
         mTTTEngine.stopAudioMixing();
         // 退出房间
@@ -335,8 +341,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
             if (MyTTTRtcEngineEventHandler.TAG.equals(action)) {
                 JniObjs mJniObjs = intent.getParcelableExtra(MyTTTRtcEngineEventHandler.MSG_TAG);
                 switch (mJniObjs.mJniType) {
-                    case LocalConstans.CALL_BACK_ON_ERROR:
-                        MyLog.d("UI onReceive CALL_BACK_ON_ERROR... ");
+                    case LocalConstans.CALL_BACK_ON_USER_KICK: //接收 SDK 运行时异常退房间的信令
                         int errorType = mJniObjs.mErrorType;
                         String message = "";
                         if (errorType == Constants.ERROR_KICK_BY_HOST) {
@@ -355,17 +360,20 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                             message = getResources().getString(R.string.error_noaudio);
                         } else if (errorType == Constants.ERROR_KICK_BY_NOVIDEODATA) {
                             message = getResources().getString(R.string.error_novideo);
-                        } else if (errorType == DISCONNECT) {
-                            message = getResources().getString(R.string.error_network_disconnected);
-                        } else if (errorType == Constants.ERROR_ENTER_ROOM_VERIFY_FAILED) {
-                            message = "token无效";
+                        } else if (errorType == Constants.ERROR_TOKEN_EXPIRED) {
+                            message = getResources().getString(R.string.error_token_expired);
                         }
                         if (!TextUtils.isEmpty(message)) {
-                            mErrorExitDialog.setMessage("退出原因: " + message);//设置显示的内容
+                            mErrorExitDialog.setMessage("退出原因: " + message);
                             mErrorExitDialog.show();
                         }
                         break;
-                    case LocalConstans.CALL_BACK_ON_USER_JOIN:
+                    case LocalConstans.CALL_BACK_ON_CONNECTLOST: //接收 SDK 断开网络的信令
+                        String connectLostMsg = getResources().getString(R.string.error_network_disconnected);
+                        mErrorExitDialog.setMessage("退出原因: " + connectLostMsg);
+                        mErrorExitDialog.show();
+                        break;
+                    case LocalConstans.CALL_BACK_ON_USER_JOIN: //接收其他用户加入当前频道的信令
                         long uid = mJniObjs.mUid;
                         int identity = mJniObjs.mIdentity;
                         MyLog.d("UI onReceive CALL_BACK_ON_USER_JOIN... uid : " + uid + " identity : " + identity);
@@ -374,11 +382,11 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                             adjustUser(true, userInfo);
                         }
                         break;
-                    case LocalConstans.CALL_BACK_ON_USER_OFFLINE:
+                    case LocalConstans.CALL_BACK_ON_USER_OFFLINE: //接收其他用户离开当前频道的信令
                         long offLineUserID = mJniObjs.mUid;
                         adjustUser(false, offLineUserID);
                         break;
-                    case LocalConstans.CALL_BACK_ON_AUDIO_VOLUME_INDICATION:
+                    case LocalConstans.CALL_BACK_ON_AUDIO_VOLUME_INDICATION:  //接收自己和其他用户的音量大小值
                         long mUid = mJniObjs.mUid;
                         int mAudioLevel = mJniObjs.mAudioLevel;
                         for (int i = 0; i < mDatas.size(); i++) {
@@ -394,7 +402,6 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
             }
         }
     }
-
 
     class MyAdapter extends RecyclerView.Adapter<MyViewHolder> {
 

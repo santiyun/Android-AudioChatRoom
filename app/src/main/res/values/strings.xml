@@ -18,9 +18,7 @@
 	<string name="error_novideo">No uplink video data for a long time</string>
 	<string name="error_otherenter">Others enter as an anchor</string>
 	<string name="error_timeout">Timeout, 10 seconds without receiving a server return</string>
-	<string name="error_noroom">The live room does not exist</string>
 	<string name="error_version">Version error</string>
-	<string name="sys_support_toast">Your system version does not support this function temporarily</string>
 	<string name="error_unconnect">Unable to connect to the server</string>
 	<string name="error_verification_code">Verification code error</string>
 	<string name="error_server_overload">Server overload</string>
@@ -64,9 +62,12 @@
 	<string name="hint_channel_name_not_empty">"Please enter room id "</string>
 	<string name="ttt_kick_out">Please come out</string>
 	<string name="ttt_set_hls_address">"HLS Address:"</string>
-	<string name="ttt_error_anchor_exit">Moderator Has Quit.</string>
-	<string name="ttt_error_pull_hls_failed">HLS Pull Stream Failure!</string>
 	<string name="ttt_test_info">Test Infos</string>
 	<string name="ttt_cancel">No</string>
 	<string name="main_item_volume">音量:%1$s</string>
+	<string name="error_room_unknow">进房间发生未知错误</string>
+	<string name="error_room_no_exist">该房间不存在</string>
+	<string name="error_token_expired">token 值已过期</string>
+	<string name="error_room_format">房间名不符合数字格式</string>
+	<string name="error_token">token 值无效</string>
 </resources>

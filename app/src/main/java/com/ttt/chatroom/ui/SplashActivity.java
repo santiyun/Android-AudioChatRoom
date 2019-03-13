@@ -6,7 +6,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.text.TextUtils;
@@ -22,46 +21,41 @@ import com.ttt.chatroom.R;
 import com.ttt.chatroom.bean.JniObjs;
 import com.ttt.chatroom.callback.MyTTTRtcEngineEventHandler;
 import com.ttt.chatroom.dialog.TestDialog;
-import com.ttt.chatroom.utils.MyLog;
 import com.ttt.chatroom.utils.MySpUtils;
-import com.wushuangtech.bean.VideoCompositingLayout;
 import com.wushuangtech.library.Constants;
 import com.wushuangtech.wstechapi.TTTRtcEngine;
 import com.wushuangtech.wstechapi.model.PublisherConfiguration;
 import com.yanzhenjie.permission.AndPermission;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
-
-import static com.wushuangtech.library.Constants.CLIENT_ROLE_BROADCASTER;
-import static com.wushuangtech.library.Constants.ERROR_ENTER_ROOM_BAD_VERSION;
-import static com.wushuangtech.library.Constants.ERROR_ENTER_ROOM_NOEXIST;
-import static com.wushuangtech.library.Constants.ERROR_ENTER_ROOM_TIMEOUT;
-import static com.wushuangtech.library.Constants.ERROR_ENTER_ROOM_UNKNOW;
-import static com.wushuangtech.library.Constants.ERROR_ENTER_ROOM_VERIFY_FAILED;
 
 public class SplashActivity extends BaseActivity {
 
     private ProgressDialog mDialog;
-    public boolean mIsLoging;
+    public static boolean mIsLoging;
     private EditText mRoomIDET;
     private MyLocalBroadcastReceiver mLocalBroadcast;
-    private String mRoomName;
-    private long mUserId;
     private RadioButton mBroadcastBT, mAuthorBT;
-    private int mRole = CLIENT_ROLE_BROADCASTER;
+    private String mRoomName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
-        // 权限申请
+        //1.首先需要申请 SDK 运行的必要权限。
         AndPermission.with(this)
                 .permission(Manifest.permission.RECORD_AUDIO, Manifest.permission.READ_PHONE_STATE)
                 .start();
 
+        //2.创建 SDK 的回调接收类对象，接收 SDK 回调的所有信令。
+        LocalConfig.mMyTTTRtcEngineEventHandler = new MyTTTRtcEngineEventHandler(getApplicationContext());
+        //3.创建 SDK 的实例对象，用于执行 SDK 各项功能。此函数仅需要调用一次即可。
+        mTTTEngine = TTTRtcEngine.create(getApplicationContext(), <这里填写APPID>, false,
+                LocalConfig.mMyTTTRtcEngineEventHandler);
+        if (mTTTEngine == null) {
+            System.exit(0);
+        }
         init();
         initTestCode();
     }
@@ -69,14 +63,12 @@ public class SplashActivity extends BaseActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        MyLog.d("SplashActivity onDestroy....");
-        TTTRtcEngine.destroy();
         try {
             unregisterReceiver(mLocalBroadcast);
         } catch (Exception e) {
             e.printStackTrace();
         }
-
+        //删除用户手机sd卡上的伴奏文件
         String mAuidoMixFilePath = Environment.getExternalStorageDirectory() + "/3T_MixFile.mp3";
         File temp = new File(mAuidoMixFilePath);
         if (temp.exists()) {
@@ -84,67 +76,62 @@ public class SplashActivity extends BaseActivity {
         }
     }
 
-    private void initView() {
+
+    private void init() {
         mAuthorBT = findViewById(R.id.vice);
         mBroadcastBT = findViewById(R.id.broadcast);
         mRoomIDET = findViewById(R.id.room_id);
         TextView mVersion = findViewById(R.id.version);
         String string = getResources().getString(R.string.version_info);
-        String result = String.format(string, TTTRtcEngine.getInstance().getVersion());
+        String result = String.format(string, TTTRtcEngine.getInstance().getSdkVersion());
         mVersion.setText(result);
-//        if (!isZh(this)) {
-//            mImageFlagIV.setImageResource(R.drawable.logo_en);
-//        } else {
-//            mImageFlagIV.setImageResource(R.drawable.logo);
-//        }
-    }
 
-    private void init() {
-        initView();
-        readSp();
-        // 注册回调函数接收的广播
+        //读取保存的数据
+        Object roomIDObj = MySpUtils.getParam(this, "RoomID", "");
+        if (roomIDObj != null) {
+            mRoomIDET.setText((String) roomIDObj);
+        }
+        //注册广播，接收 SDK 回调的信令。
         mLocalBroadcast = new MyLocalBroadcastReceiver();
         IntentFilter filter = new IntentFilter();
         filter.addAction(MyTTTRtcEngineEventHandler.TAG);
         registerReceiver(mLocalBroadcast, filter);
-        MyLog.d("SplashActivity onCreate.... model : " + Build.MODEL);
+        //创建进度对话框
         mDialog = new ProgressDialog(this);
         mDialog.setTitle("");
         mDialog.setCancelable(false);
         mDialog.setMessage(getString(R.string.ttt_loading_channel));
     }
 
-    private void readSp() {
-        // 读取保存的数据
-        Object roomIDObj = MySpUtils.getParam(this, "RoomID", "");
-        if (roomIDObj != null) {
-            mRoomIDET.setText((String) roomIDObj);
-        }
-
-        Object spObj = MySpUtils.getParam(this, "PushUrl", "");
-        if (spObj != null) {
-            LocalConfig.mPushUrl = (String) spObj;
-        }
-
-        Object spObj2 = MySpUtils.getParam(this, "PullUrl", "");
-        if (spObj2 != null) {
-            LocalConfig.mPullUrl = (String) spObj;
-        }
-    }
-
     public void onClickRoleButton(View v) {
         mBroadcastBT.setChecked(false);
         mAuthorBT.setChecked(false);
-
         ((RadioButton) v).setChecked(true);
-        switch (v.getId()) {
-            case R.id.broadcast:
-                mRole = Constants.CLIENT_ROLE_BROADCASTER;
-                break;
-            case R.id.vice:
-                mRole = Constants.CLIENT_ROLE_AUDIENCE;
-                break;
+    }
+
+    /**
+     * 配置 SDK 相关信息
+     */
+    private void initSDK() {
+        //4.设置频道模式为通信模式。
+        mTTTEngine.setChannelProfile(Constants.CHANNEL_PROFILE_COMMUNICATION);
+        //5.设置麦上用户或麦下用户。
+        if (mBroadcastBT.isChecked()) {
+            LocalConfig.mRole = Constants.CLIENT_ROLE_BROADCASTER;
+        } else if (mAuthorBT.isChecked()) {
+            LocalConfig.mRole = Constants.CLIENT_ROLE_AUDIENCE;
         }
+        mTTTEngine.setClientRole(LocalConfig.mRole);
+        //6.设置本地视频预览分辨率为360P，此步骤为可选操作，默认就是360P。
+        mTTTEngine.setVideoProfile(Constants.TTTRTC_VIDEOPROFILE_360P, false);
+        PublisherConfiguration mPublisherConfiguration = new PublisherConfiguration();
+        if (mTestDialog.mTestConfig.mIsTestMode) {
+            mPublisherConfiguration.setPushUrl(mTestDialog.mTestConfig.mPushUrl);
+        } else {
+            mPublisherConfiguration.setPushUrl("rtmp://127.0.0.1/live/" + mRoomName);
+        }
+        mTTTEngine.configPublisher(mPublisherConfiguration);
+        mTTTEngine.setServerIp(mTestDialog.mTestConfig.mIP, mTestDialog.mTestConfig.mPort);
     }
 
     public void onClickEnterButton(View v) {
@@ -162,56 +149,18 @@ public class SplashActivity extends BaseActivity {
             return;
         }
         mIsLoging = true;
-
+        //随机生成用户ID
         Random mRandom = new Random();
-        mUserId = mRandom.nextInt(999999);
-        // 保存配置
-        MySpUtils.setParam(this, "RoomID", mRoomName);
-        // 设置推流地址
-        initSDK();
+        long mUserId = mRandom.nextInt(999999);
         LocalConfig.mUid = mUserId;
+        //保存配置
+        MySpUtils.setParam(this, "RoomID", mRoomName);
+        //配置 SDK
+        initSDK();
         // 开始加入频道
         mTTTEngine.joinChannel("", mRoomName, mUserId);
         mDialog.setMessage(getString(R.string.ttt_loading_channel));
         mDialog.show();
-    }
-
-    private void initSDK() {
-        // 设置频道模式为通信模式
-        mTTTEngine.setChannelProfile(Constants.CHANNEL_PROFILE_COMMUNICATION);
-        // 设置麦上或麦下
-        mTTTEngine.setClientRole(mRole, null);
-        LocalConfig.mRole = mRole;
-        mTTTEngine.setVideoProfile(Constants.TTTRTC_VIDEOPROFILE_360P, false);
-        PublisherConfiguration mPublisherConfiguration = new PublisherConfiguration();
-        if (LocalConfig.mIsTestMode) {
-            mPublisherConfiguration.setPushUrl(LocalConfig.mPushUrl);
-        } else {
-            mPublisherConfiguration.setPushUrl("rtmp://127.0.0.1/live/" + mRoomName);
-        }
-        mTTTEngine.configPublisher(mPublisherConfiguration);
-        MyLog.d("设置服务器地址 : " + LocalConfig.mIP);
-        mTTTEngine.setServerIp(LocalConfig.mIP, LocalConfig.mPort);
-    }
-
-    public VideoCompositingLayout.Region[] buildRemoteLayoutLocation() {
-        List<VideoCompositingLayout.Region> tempList = new ArrayList<>();
-
-        VideoCompositingLayout.Region mRegion = new VideoCompositingLayout.Region();
-        mRegion.mUserID = mUserId;
-        mRegion.x = 0;
-        mRegion.y = 0;
-        mRegion.width = 1;
-        mRegion.height = 1;
-        mRegion.zOrder = 0;
-        tempList.add(mRegion);
-
-        VideoCompositingLayout.Region[] mRegions = new VideoCompositingLayout.Region[tempList.size()];
-        for (int k = 0; k < tempList.size(); k++) {
-            VideoCompositingLayout.Region region = tempList.get(k);
-            mRegions[k] = region;
-        }
-        return mRegions;
     }
 
     private class MyLocalBroadcastReceiver extends BroadcastReceiver {
@@ -222,46 +171,40 @@ public class SplashActivity extends BaseActivity {
             if (MyTTTRtcEngineEventHandler.TAG.equals(action)) {
                 JniObjs mJniObjs = intent.getParcelableExtra(MyTTTRtcEngineEventHandler.MSG_TAG);
                 switch (mJniObjs.mJniType) {
-                    case LocalConstans.CALL_BACK_ON_ENTER_ROOM:
-                        //界面跳转
+                    case LocalConstans.CALL_BACK_ON_ENTER_ROOM: //接收进房间成功的回调信令
+                        //进行界面跳转，进入主界面
                         Intent activityIntent = new Intent();
-                        activityIntent.putExtra("ROOM_ID", Long.parseLong(mRoomName));
-                        activityIntent.putExtra("USER_ID", mUserId);
-                        activityIntent.putExtra("ROLE", mRole);
                         activityIntent.setClass(SplashActivity.this, MainActivity.class);
                         startActivity(activityIntent);
                         mDialog.dismiss();
                         mIsLoging = false;
                         break;
-                    case LocalConstans.CALL_BACK_ON_ERROR:
+                    case LocalConstans.CALL_BACK_ON_ERROR: //接收进房间失败的回调信令，具体的错误信息，请看 Toast 的提示信息
                         mIsLoging = false;
                         mDialog.dismiss();
-                        final int errorType = mJniObjs.mErrorType;
-                        SplashActivity.this.runOnUiThread(() -> {
-                            MyLog.d("onReceive CALL_BACK_ON_ERROR errorType : " + errorType);
-                            if (errorType == ERROR_ENTER_ROOM_TIMEOUT) {
-                                Toast.makeText(mContext, mContext.getResources().getString(R.string.error_timeout), Toast.LENGTH_SHORT).show();
-                            } else if (errorType == ERROR_ENTER_ROOM_UNKNOW) {
-                                Toast.makeText(mContext, mContext.getResources().getString(R.string.error_unconnect), Toast.LENGTH_SHORT).show();
-                            } else if (errorType == ERROR_ENTER_ROOM_VERIFY_FAILED) {
-                                Toast.makeText(mContext, mContext.getResources().getString(R.string.error_verification_code), Toast.LENGTH_SHORT).show();
-                            } else if (errorType == ERROR_ENTER_ROOM_BAD_VERSION) {
-                                Toast.makeText(mContext, mContext.getResources().getString(R.string.error_version), Toast.LENGTH_SHORT).show();
-                            } else if (errorType == ERROR_ENTER_ROOM_NOEXIST) {
-                                Toast.makeText(mContext, mContext.getResources().getString(R.string.error_noroom), Toast.LENGTH_SHORT).show();
-                            }
-                        });
+                        int errorType = mJniObjs.mErrorType;
+                        if (errorType == Constants.ERROR_ENTER_ROOM_INVALIDCHANNELNAME) {
+                            Toast.makeText(mContext, mContext.getResources().getString(R.string.error_room_format), Toast.LENGTH_SHORT).show();
+                        } else if (errorType == Constants.ERROR_ENTER_ROOM_TIMEOUT) {
+                            Toast.makeText(mContext, mContext.getResources().getString(R.string.error_timeout), Toast.LENGTH_SHORT).show();
+                        } else if (errorType == Constants.ERROR_ENTER_ROOM_VERIFY_FAILED) {
+                            Toast.makeText(mContext, mContext.getResources().getString(R.string.error_token), Toast.LENGTH_SHORT).show();
+                        } else if (errorType == Constants.ERROR_ENTER_ROOM_BAD_VERSION) {
+                            Toast.makeText(mContext, mContext.getResources().getString(R.string.error_version), Toast.LENGTH_SHORT).show();
+                        } else if (errorType == Constants.ERROR_ENTER_ROOM_CONNECT_FAILED) {
+                            Toast.makeText(mContext, mContext.getResources().getString(R.string.error_unconnect), Toast.LENGTH_SHORT).show();
+                        } else if (errorType == Constants.ERROR_ENTER_ROOM_NOEXIST) {
+                            Toast.makeText(mContext, mContext.getResources().getString(R.string.error_room_no_exist), Toast.LENGTH_SHORT).show();
+                        } else if (errorType == Constants.ERROR_ENTER_ROOM_SERVER_VERIFY_FAILED) {
+                            Toast.makeText(mContext, mContext.getResources().getString(R.string.error_verification_code), Toast.LENGTH_SHORT).show();
+                        } else if (errorType == Constants.ERROR_ENTER_ROOM_UNKNOW) {
+                            Toast.makeText(mContext, mContext.getResources().getString(R.string.error_room_unknow), Toast.LENGTH_SHORT).show();
+                        }
                         break;
                 }
             }
         }
     }
-
-//    public static boolean isZh(Context context) {
-//        Locale locale = context.getResources().getConfiguration().locale;
-//        String language = locale.getLanguage();
-//        return language.endsWith("zh");
-//    }
 
     TestDialog mTestDialog;
 
@@ -269,6 +212,16 @@ public class SplashActivity extends BaseActivity {
     public void initTestCode() {
         mTestDialog = new TestDialog(mContext);
         mTestDialog.setCanceledOnTouchOutside(false);
+
+        Object spObj = MySpUtils.getParam(this, "PushUrl", "");
+        if (spObj != null) {
+            mTestDialog.mTestConfig.mPushUrl = (String) spObj;
+        }
+
+        Object spObj2 = MySpUtils.getParam(this, "PullUrl", "");
+        if (spObj2 != null) {
+            mTestDialog.mTestConfig.mPullUrl = (String) spObj;
+        }
     }
 
     public void onTestButtonClick(View v) {

@@ -23,7 +23,6 @@ public class MyTTTRtcEngineEventHandler extends TTTRtcEngineEventHandler {
     private boolean mIsSaveCallBack;
     private List<JniObjs> mSaveCallBack;
     private Context mContext;
-    public boolean mIsSave = true;
 
     public MyTTTRtcEngineEventHandler(Context mContext) {
         this.mContext = mContext;
@@ -38,9 +37,7 @@ public class MyTTTRtcEngineEventHandler extends TTTRtcEngineEventHandler {
         mJniObjs.mChannelName = channel;
         mJniObjs.mUid = uid;
         sendMessage(mJniObjs);
-        if (mIsSave) {
-            mIsSaveCallBack = true;
-        }
+        mIsSaveCallBack = true;
     }
 
     @Override
@@ -49,6 +46,20 @@ public class MyTTTRtcEngineEventHandler extends TTTRtcEngineEventHandler {
         JniObjs mJniObjs = new JniObjs();
         mJniObjs.mJniType = LocalConstans.CALL_BACK_ON_ERROR;
         mJniObjs.mErrorType = errorType;
+        if (mIsSaveCallBack) {
+            saveCallBack(mJniObjs);
+        } else {
+            sendMessage(mJniObjs);
+        }
+    }
+
+    @Override
+    public void onUserKicked(long uid, int reason) {
+        super.onUserKicked(uid, reason);
+        MyLog.i("wzg", "onUserKicked.... uid ： " + uid + "reason : " + reason);
+        JniObjs mJniObjs = new JniObjs();
+        mJniObjs.mJniType = LocalConstans.CALL_BACK_ON_USER_KICK;
+        mJniObjs.mErrorType = reason;
         if (mIsSaveCallBack) {
             saveCallBack(mJniObjs);
         } else {
@@ -86,20 +97,6 @@ public class MyTTTRtcEngineEventHandler extends TTTRtcEngineEventHandler {
     }
 
     @Override
-    public void onUserEnableVideo(long uid, boolean muted) {
-        MyLog.i("wzg", "onUserEnableVideo.... uid : " + uid + " | mute : " + muted);
-        JniObjs mJniObjs = new JniObjs();
-        mJniObjs.mJniType = LocalConstans.CALL_BACK_ON_USER_MUTE_VIDEO;
-        mJniObjs.mUid = uid;
-        mJniObjs.mIsEnableVideo = muted;
-        if (mIsSaveCallBack) {
-            saveCallBack(mJniObjs);
-        } else {
-            sendMessage(mJniObjs);
-        }
-    }
-
-    @Override
     public void onAudioVolumeIndication(long nUserID, int audioLevel, int audioLevelFullRange) {
         JniObjs mJniObjs = new JniObjs();
         mJniObjs.mJniType = LocalConstans.CALL_BACK_ON_AUDIO_VOLUME_INDICATION;
@@ -113,104 +110,10 @@ public class MyTTTRtcEngineEventHandler extends TTTRtcEngineEventHandler {
     }
 
     @Override
-    public void onFirstRemoteVideoFrame(long uid, int width, int height) {
-        MyLog.i("wzg", "onFirstRemoteVideoFrame.... uid ： " + uid + " | width : " + width + " | height : " + height);
-        JniObjs mJniObjs = new JniObjs();
-        mJniObjs.mJniType = LocalConstans.CALL_BACK_ON_REMOVE_FIRST_FRAME_COME;
-        mJniObjs.mUid = uid;
-        if (mIsSaveCallBack) {
-            saveCallBack(mJniObjs);
-        } else {
-            sendMessage(mJniObjs);
-        }
-    }
-
-    @Override
-    public void onSetSEI(String sei) {
-        MyLog.i("wzg", "onSei.... sei : " + sei);
-        JniObjs mJniObjs = new JniObjs();
-        mJniObjs.mJniType = LocalConstans.CALL_BACK_ON_SEI;
-        mJniObjs.mSEI = sei;
-        if (mIsSaveCallBack) {
-            saveCallBack(mJniObjs);
-        } else {
-            sendMessage(mJniObjs);
-        }
-    }
-
-    @Override
-    public void onUserMuteAudio(long uid, boolean muted) {
-        MyLog.i("wzg", "OnRemoteAudioMuted.... uid : " + uid + " | muted : " + muted + " | mIsSaveCallBack : " + mIsSaveCallBack);
-        JniObjs mJniObjs = new JniObjs();
-        mJniObjs.mJniType = LocalConstans.CALL_BACK_ON_MUTE_AUDIO;
-        mJniObjs.mUid = uid;
-        mJniObjs.mIsDisableAudio = muted;
-        if (mIsSaveCallBack) {
-            saveCallBack(mJniObjs);
-        } else {
-            sendMessage(mJniObjs);
-        }
-    }
-
-    @Override
-    public void onSpeakingMuted(long uid, boolean muted) {
-        MyLog.i("wzg", "onSpeakingMuted.... uid : " + uid + " | muted : " + muted + " | mIsSaveCallBack : " + mIsSaveCallBack);
-        JniObjs mJniObjs = new JniObjs();
-        mJniObjs.mJniType = LocalConstans.CALL_BACK_ON_SPEAK_MUTE_AUDIO;
-        mJniObjs.mUid = uid;
-        mJniObjs.mIsDisableAudio = muted;
-        if (mIsSaveCallBack) {
-            saveCallBack(mJniObjs);
-        } else {
-            sendMessage(mJniObjs);
-        }
-    }
-
-    @Override
     public void onReconnectServerFailed() {
         MyLog.i("wzg", "onReconnectServerFailed.... ");
         JniObjs mJniObjs = new JniObjs();
         mJniObjs.mJniType = LocalConstans.CALL_BACK_ON_CONNECTLOST;
-        if (mIsSaveCallBack) {
-            saveCallBack(mJniObjs);
-        } else {
-            sendMessage(mJniObjs);
-        }
-    }
-
-    @Override
-    public void onAudioRouteChanged(int routing) {
-        MyLog.i("wzg", "onAudioRouteChanged.... routing : " + routing);
-        JniObjs mJniObjs = new JniObjs();
-        mJniObjs.mJniType = LocalConstans.CALL_BACK_ON_AUDIO_ROUTE;
-        mJniObjs.mAudioRoute = routing;
-        if (mIsSaveCallBack) {
-            saveCallBack(mJniObjs);
-        } else {
-            sendMessage(mJniObjs);
-        }
-    }
-
-    @Override
-    public void onUserRoleChanged(long userID, int userRole) {
-        MyLog.i("wzg", "onUserRoleChanged... userID : " + userID + " userRole : " + userRole);
-        JniObjs mJniObjs = new JniObjs();
-        mJniObjs.mJniType = LocalConstans.CALL_BACK_ON_USER_ROLE_CHANGED;
-        mJniObjs.mUid = userID;
-        mJniObjs.mIdentity = userRole;
-        if (mIsSaveCallBack) {
-            saveCallBack(mJniObjs);
-        } else {
-            sendMessage(mJniObjs);
-        }
-    }
-
-    @Override
-    public void onScreenRecordTime(int s) {
-        MyLog.i("wzg", "onScreenRecordTime: " + s);
-        JniObjs mJniObjs = new JniObjs();
-        mJniObjs.mJniType = LocalConstans.CALL_BACK_ON_SCREEN_RECORD_TIME;
-        mJniObjs.mScreenRecordTime = s;
         if (mIsSaveCallBack) {
             saveCallBack(mJniObjs);
         } else {
