@@ -151,12 +151,7 @@ public class SplashActivity extends BaseActivity {
         //配置 SDK
         initSDK();
         // 开始加入频道
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                mTTTEngine.joinChannel("", mRoomName, mUserId);
-            }
-        }).start();
+        mTTTEngine.joinChannel("", mRoomName, mUserId);
         mDialog.setMessage(getString(R.string.ttt_loading_channel));
         mDialog.show();
     }
@@ -174,29 +169,30 @@ public class SplashActivity extends BaseActivity {
                         Intent activityIntent = new Intent();
                         activityIntent.setClass(SplashActivity.this, MainActivity.class);
                         startActivity(activityIntent);
-                        mDialog.dismiss();
-                        mIsLoging = false;
+                        if (mDialog != null) {
+                            mDialog.dismiss();
+                        }
                         break;
                     case LocalConstans.CALL_BACK_ON_ERROR: //接收进房间失败的回调信令，具体的错误信息，请看 Toast 的提示信息
                         mIsLoging = false;
                         mDialog.dismiss();
                         int errorType = mJniObjs.mErrorType;
                         if (errorType == Constants.ERROR_ENTER_ROOM_INVALIDCHANNELNAME) {
-                            Toast.makeText(mContext, mContext.getResources().getString(R.string.error_room_format), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(mContext, mContext.getResources().getString(R.string.ttt_error_enterchannel_format), Toast.LENGTH_SHORT).show();
                         } else if (errorType == Constants.ERROR_ENTER_ROOM_TIMEOUT) {
-                            Toast.makeText(mContext, mContext.getResources().getString(R.string.error_timeout), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(mContext, mContext.getResources().getString(R.string.ttt_error_enterchannel_timeout), Toast.LENGTH_SHORT).show();
                         } else if (errorType == Constants.ERROR_ENTER_ROOM_VERIFY_FAILED) {
-                            Toast.makeText(mContext, mContext.getResources().getString(R.string.error_token), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(mContext, mContext.getResources().getString(R.string.ttt_error_enterchannel_token_invaild), Toast.LENGTH_SHORT).show();
                         } else if (errorType == Constants.ERROR_ENTER_ROOM_BAD_VERSION) {
-                            Toast.makeText(mContext, mContext.getResources().getString(R.string.error_version), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(mContext, mContext.getResources().getString(R.string.ttt_error_enterchannel_version), Toast.LENGTH_SHORT).show();
                         } else if (errorType == Constants.ERROR_ENTER_ROOM_CONNECT_FAILED) {
-                            Toast.makeText(mContext, mContext.getResources().getString(R.string.error_unconnect), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(mContext, mContext.getResources().getString(R.string.ttt_error_enterchannel_unconnect), Toast.LENGTH_SHORT).show();
                         } else if (errorType == Constants.ERROR_ENTER_ROOM_NOEXIST) {
-                            Toast.makeText(mContext, mContext.getResources().getString(R.string.error_room_no_exist), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(mContext, mContext.getResources().getString(R.string.ttt_error_enterchannel_room_no_exist), Toast.LENGTH_SHORT).show();
                         } else if (errorType == Constants.ERROR_ENTER_ROOM_SERVER_VERIFY_FAILED) {
-                            Toast.makeText(mContext, mContext.getResources().getString(R.string.error_verification_code), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(mContext, mContext.getResources().getString(R.string.ttt_error_enterchannel_verification_failed), Toast.LENGTH_SHORT).show();
                         } else if (errorType == Constants.ERROR_ENTER_ROOM_UNKNOW) {
-                            Toast.makeText(mContext, mContext.getResources().getString(R.string.error_room_unknow), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(mContext, mContext.getResources().getString(R.string.ttt_error_enterchannel_unknow), Toast.LENGTH_SHORT).show();
                         }
                         break;
                 }

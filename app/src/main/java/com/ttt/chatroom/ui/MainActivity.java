@@ -112,7 +112,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         layoutParams.height = (int) (actionbarHeight + getStatusBarHeight(this));
         mTitleViewGroup.setLayoutParams(layoutParams);
 
-        // 注册回调函数，接收 SDK 发的广播
+        //注册回调函数，接收 SDK 发的广播
         mLocalBroadcast = new MyLocalBroadcastReceiver();
         IntentFilter filter = new IntentFilter();
         filter.addAction(MyTTTRtcEngineEventHandler.TAG);
@@ -126,7 +126,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         }
         mMyAdapter.notifyDataSetChanged();
 
-        //创建错误提示对话框
+        //创建频道接收 SDK 的异常错误信息信令，弹出提示对话框并退出
         if (mErrorExitDialog == null) {
             mErrorExitDialog = new AlertDialog.Builder(mContext)
                     .setTitle("退出房间提示")
@@ -345,23 +345,23 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                         int errorType = mJniObjs.mErrorType;
                         String message = "";
                         if (errorType == Constants.ERROR_KICK_BY_HOST) {
-                            message = getResources().getString(R.string.error_kicked);
+                            message = getResources().getString(R.string.ttt_error_exit_kicked);
                         } else if (errorType == Constants.ERROR_KICK_BY_PUSHRTMPFAILED) {
-                            message = getResources().getString(R.string.error_rtmp);
+                            message = getResources().getString(R.string.ttt_error_exit_push_rtmp_failed);
                         } else if (errorType == Constants.ERROR_KICK_BY_SERVEROVERLOAD) {
-                            message = getResources().getString(R.string.error_server_overload);
+                            message = getResources().getString(R.string.ttt_error_exit_server_overload);
                         } else if (errorType == Constants.ERROR_KICK_BY_MASTER_EXIT) {
-                            message = getResources().getString(R.string.error_anchorexited);
+                            message = getResources().getString(R.string.ttt_error_exit_anchor_exited);
                         } else if (errorType == Constants.ERROR_KICK_BY_RELOGIN) {
-                            message = getResources().getString(R.string.error_relogin);
+                            message = getResources().getString(R.string.ttt_error_exit_relogin);
                         } else if (errorType == Constants.ERROR_KICK_BY_NEWCHAIRENTER) {
-                            message = getResources().getString(R.string.error_otherenter);
+                            message = getResources().getString(R.string.ttt_error_exit_other_anchor_enter);
                         } else if (errorType == Constants.ERROR_KICK_BY_NOAUDIODATA) {
-                            message = getResources().getString(R.string.error_noaudio);
+                            message = getResources().getString(R.string.ttt_error_exit_noaudio_upload);
                         } else if (errorType == Constants.ERROR_KICK_BY_NOVIDEODATA) {
-                            message = getResources().getString(R.string.error_novideo);
+                            message = getResources().getString(R.string.ttt_error_exit_novideo_upload);
                         } else if (errorType == Constants.ERROR_TOKEN_EXPIRED) {
-                            message = getResources().getString(R.string.error_token_expired);
+                            message = getResources().getString(R.string.ttt_error_exit_token_expired);
                         }
                         if (!TextUtils.isEmpty(message)) {
                             mErrorExitDialog.setMessage("退出原因: " + message);
@@ -369,7 +369,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                         }
                         break;
                     case LocalConstans.CALL_BACK_ON_CONNECTLOST: //接收 SDK 断开网络的信令
-                        String connectLostMsg = getResources().getString(R.string.error_network_disconnected);
+                        String connectLostMsg = getResources().getString(R.string.ttt_error_network_disconnected);
                         mErrorExitDialog.setMessage("退出原因: " + connectLostMsg);
                         mErrorExitDialog.show();
                         break;
